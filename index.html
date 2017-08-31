@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>math.js | plot</title>
+  <script src="dependencies/math.js"></script>
+
+  <!-- load http://maurizzzio.github.io/function-plot/ -->
+  <script src="dependencies/d3.min.js"></script>
+  <script src="dependencies/function-plot.js"></script>
+
+  <style>
+    input[type=text] {
+      width: 300px;
+    }
+    input {
+      padding: 6px;
+    }
+    body, html, input {
+      font-family: sans-serif;
+      font-size: 11pt;
+
+    }
+    form {
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+
+<form id="form">
+  <label for="eq">Enter an equation:</label>
+  <input type="text" id="eq" value="0.4 * sin(x*1000) + 0.5 * cos(x*2500)" />
+  <input type="submit" value="Draw" />
+</form>
+
+<div id="plot"></div>
+
+<script>
+
+ var dt = 1/48000;
+
+  function draw() {
+    try {
+      var data = []
+      var x = 0;
+      var fn = document.getElementById('eq').value;
+      while (x< 0.1){
+        data.push([x,math.eval(fn, {x:x})]);
+        x+=dt;
+      }
+
+      functionPlot({
+        target: '#plot',
+        width: screen.width,
+        height: screen.width/5,
+        xDomain: [0,0.1],
+        yDomain: [-2,2],
+        data: [{
+          range: [0,0.1],
+          fnType: 'points',
+          graphType: 'polyline',
+          points: data
+        }]
+
+      });
+
+    }
+    catch (err) {
+      console.log(err);
+      alert(err);
+    }
+  }
+
+  document.getElementById('form').onsubmit = function (event) {
+    event.preventDefault();
+    draw();
+  };
+
+  draw();
+</script>
+
+</body>
+</html>
