@@ -2,10 +2,9 @@
 <html>
 <head>
   <title>math.js | plot</title>
-  <script src="dependencies/math.js"></script>
-
-  <!-- load http://maurizzzio.github.io/function-plot/ -->
+  <script src="dependencies/math.js"></script> 
   <script src="dependencies/d3.min.js"></script>
+  <script src="dependencies/FFT.js"></script>
   <script src="dependencies/function-plot.js"></script>
   <script src="src/waves.js"></script>
 
@@ -30,42 +29,71 @@
 
 <form id="form">
   <label for="eq">Enter an equation:</label>
-  <input type="text" id="eq" value="0.4 * sin(x*1000) + 0.5 * cos(x*2500)" />
+  <input type="text" id="eq" value="atan(3*cos(x*2500) + 2*sin(x*1000))" />
   <input type="submit" value="Draw" />
 </form>
 
 <div id="plot"></div>
+<div><canvas id="fft" width="1000" height="200"></canvas></div>
 
 <script>
-
- var dt = 1/48000;
-
+var rate = 48000;
+  var dt = 1/rate;
+  var num_samples = 0.1/dt;
+  var canvas = document.getElementById('fft'),
+      ctx = canvas.getContext('2d'),
+      fft = new FFT(num_samples, rate);
+  
   function draw() {
     try {
       var data = []
       var x = 0;
       var fn = document.getElementById('eq').value;
-      while (x< 0.1){
+      var n = 0;
+      while (n < num_samples){
         data.push([x,math.eval(fn, {x:x})]);
-        x+=dt;
+        x+=dt*2*Math.PI;
+        n += 1;
       }
       var ws= waves(data)
 
-      var points = []
-      ws.forEach( (wave)=> { points.push( {
-          range: [0,0.1],
-          fnType: 'points',
-          graphType: 'polyline',
-          points: wave
-        })})
       functionPlot({
         target: '#plot',
         width: screen.width,
         height: screen.width/5,
         xDomain: [0,0.1],
         yDomain: [-2,2],
-        data: points
+        data: [{
+          range: [0,0.1],
+          fnType: 'points',
+          graphType: 'polyline',
+          points: data
+        },
+        {
+          range: [0,0.1],
+          fnType: 'points',
+          graphType: 'polyline',
+          points: ws
+        }]
       });
+
+      var signal = new Float32Array(num_samples);
+      for (var i = 0; i < num_samples; i++ ) {
+        signal[i] = ws[i][1]
+      }
+
+      var s = dft(signal, false);
+
+      // Clear the canvas before drawing spectrum
+      ctx.clearRect(0,0, canvas.width, canvas.height);
+      var sample_steps = 1;
+      for (var i = 0; i < 5000; i+=sample_steps ) {
+        // multiply spectrum by a zoom value
+        magnitude = Math.log(1+ Math.sqrt(s[i].real*s[i].real + s[i].imag*s[i].imag))   * 400;
+
+        // Draw rectangle bars for each frequency bin
+        ctx.fillRect(i/sample_steps, canvas.height, 1, -magnitude);
+      }
 
     }
     catch (err) {
