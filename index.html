@@ -81,15 +81,15 @@ var rate = 48000;
       for (var i = 0; i < num_samples; i++ ) {
         signal[i] = ws[i][1]
       }
-
-      var s = dft(signal, false);
+      fft.forward(signal)
+      var s = fft.spectrum
 
       // Clear the canvas before drawing spectrum
       ctx.clearRect(0,0, canvas.width, canvas.height);
       var sample_steps = 1;
-      for (var i = 0; i < 5000; i+=sample_steps ) {
+      for (var i = 0; i < 4800; i+=sample_steps ) {
         // multiply spectrum by a zoom value
-        magnitude = Math.log(1+ Math.sqrt(s[i].real*s[i].real + s[i].imag*s[i].imag))   * 400;
+        magnitude = Math.log(1+ s[i])   * 100;
 
         // Draw rectangle bars for each frequency bin
         ctx.fillRect(i/sample_steps, canvas.height, 1, -magnitude);

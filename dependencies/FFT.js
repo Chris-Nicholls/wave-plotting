@@ -24,6 +24,8 @@ var FFT = function(bufferSize, sampleRate) {
         this.sinTable[i] = Math.sin(-Math.PI/i);
         this.cosTable[i] = Math.cos(-Math.PI/i);
       }
+      this.cosTable[0] = 0;
+      this.sinTable[0] = 0;
     };
 
     FFT.prototype.forward = function(buffer) {
@@ -64,7 +66,7 @@ var FFT = function(bufferSize, sampleRate) {
         for ( var fftStep = 0; fftStep < halfSize; fftStep++ ) {
           i = fftStep;
 
-          while ( i < bufferSize ) {
+          while ( i +halfSize < bufferSize ) {
             off = i + halfSize;
             tr = (currentPhaseShiftReal * real[off]) - (currentPhaseShiftImag * imag[off]);
             ti = (currentPhaseShiftReal * imag[off]) + (currentPhaseShiftImag * real[off]);
@@ -91,31 +93,3 @@ var FFT = function(bufferSize, sampleRate) {
     }
 }
 
-function createComplex(real, imag) {
-  return {
-    real: real,
-    imag: imag
-  };
-}
-
-function dft(samples, inverse) {
-  var len = samples.length;
-  var arr = Array(len);
-  var pi2 = inverse ? Math.PI * 2 : Math.PI * (-2);
-  var invlen = 1 / len;
-  for (var i = 0; i < len; i++) {
-    arr[i] = createComplex(0, 0);
-    for (var n = 0; n < len; n++) {
-      var theta = pi2 * i * n * invlen;
-      var costheta = Math.cos(theta);
-      var sintheta = Math.sin(theta);
-      arr[i].real += samples[n]* costheta;
-      arr[i].imag += samples[n]* sintheta;
-    }
-    if (!inverse) {
-      arr[i].real *= invlen;
-      arr[i].imag *= invlen;
-    }
-  }
-  return arr;
-}
