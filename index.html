@@ -7,6 +7,7 @@
   <!-- load http://maurizzzio.github.io/function-plot/ -->
   <script src="dependencies/d3.min.js"></script>
   <script src="dependencies/function-plot.js"></script>
+  <script src="src/waves.js"></script>
 
   <style>
     input[type=text] {
@@ -48,20 +49,22 @@
         data.push([x,math.eval(fn, {x:x})]);
         x+=dt;
       }
+      var ws= waves(data)
 
+      var points = []
+      ws.forEach( (wave)=> { points.push( {
+          range: [0,0.1],
+          fnType: 'points',
+          graphType: 'polyline',
+          points: wave
+        })})
       functionPlot({
         target: '#plot',
         width: screen.width,
         height: screen.width/5,
         xDomain: [0,0.1],
         yDomain: [-2,2],
-        data: [{
-          range: [0,0.1],
-          fnType: 'points',
-          graphType: 'polyline',
-          points: data
-        }]
-
+        data: points
       });
 
     }
