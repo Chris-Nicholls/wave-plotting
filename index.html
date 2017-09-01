@@ -34,16 +34,22 @@
 </form>
 
 <div id="plot"></div>
+
+<div id="slidecontainer">
+  <input type="range" min="10" max="1000" value="1" class="slider" id="zoom">
+</div>
+
 <div><canvas id="fft" width="1000" height="200"></canvas></div>
 
 <script>
-var rate = 48000;
+  var duration = 0.05;
+  var rate = 44000;
   var dt = 1/rate;
-  var num_samples = 0.1/dt;
+  var num_samples = Math.round(duration/dt);
   var bars = document.getElementById('fft'),
       ctx = bars.getContext('2d'),
       fft = new FFT(num_samples, rate);
-  
+  var plotInstance;
   bars.width = screen.width;
 
   function draw() {
@@ -59,22 +65,23 @@ var rate = 48000;
       }
       var ws= waves(data)
 
-      functionPlot({
+      plotInstance = functionPlot({
         target: '#plot',
         width: screen.width,
         height: screen.width/5,
-        xDomain: [0,0.1],
+        xDomain: [0,duration],
         yDomain: [-2,2],
+        disableZoom: true,
         data: [{
-          range: [0,0.1],
+          range: [0,duration],
           fnType: 'points',
           graphType: 'polyline',
           points: data
         },
         {
-          range: [0,0.1],
+          range: [0,duration],
           fnType: 'points',
-          graphType: 'polyline',
+          graphType: 'scatter',
           points: ws
         }]
       });
@@ -89,17 +96,19 @@ var rate = 48000;
       // Clear the canvas before drawing spectrum
       ctx.clearRect(0,0, bars.width, bars.height);
       var sample_steps = 1;
-      var bucket_size = 10;
+      var num_buckets = 1000;
+      var bucket_size = num_samples/num_buckets;
       var scale = bars.width/(num_samples/2);
-      for (var i = 0; i + bucket_size < 4800; i+=sample_steps ) {
+      for (var i = 0; i + bucket_size < num_samples; ) {
         var magnitude = 0;
         for (var j = 0; j <= bucket_size; j++, i++) {
-          magnitude += s[i]*s[i];
+          magnitude = Math.max(magnitude, s[i]*s[i]);
         };
         // multiply spectrum by a zoom value
         
         // Draw rectangle bars for each frequency bin
-        ctx.fillRect(scale*i/sample_steps, bars.height, sample_steps*bucket_size*scale, -Math.log(1+Math.sqrt(magnitude)/bucket_size)*1000);
+        var height = Math.sqrt(magnitude)/bucket_size*300
+        ctx.fillRect(scale*i/sample_steps, bars.height/2+height/2, sample_steps*bucket_size*scale, -height);
       }
 
     }
@@ -107,6 +116,12 @@ var rate = 48000;
       console.log(err);
       alert(err);
     }
+  }
+
+  var slider = document.getElementById("zoom");
+  // Update the current slider value (each time you drag the slider handle)
+  slider.oninput = function() {
+      plotInstance.programmaticZoom([0, 1/this.value], [-2,2]) = this.value;
   }
 
   document.getElementById('form').onsubmit = function (event) {
