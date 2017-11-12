@@ -29,7 +29,7 @@
 
 <form id="form">
   <label for="eq">Enter an equation:</label>
-  <input type="text" id="eq" value="atan(3*cos(x*2500) + 2*sin(x*1000))" />
+  <input type="text" id="eq" value="sin(1000x)" />
   <input type="submit" value="Draw" />
 </form>
 
@@ -42,7 +42,7 @@
 <div><canvas id="fft" width="1000" height="200"></canvas></div>
 
 <script>
-  var duration = 0.05;
+  var duration = 0.1;
   var rate = 44000;
   var dt = 1/rate;
   var num_samples = Math.round(duration/dt);
@@ -63,7 +63,30 @@
         x+=dt;
         n += 1;
       }
-      var ws= waves(data)
+      var ws = waves(data,dt)
+
+      var outputs = [{
+          range: [0,duration],
+          fnType: 'points',
+          graphType: 'polyline',
+          points: data
+        }]
+
+      for (var output in ws[0]){
+        outputs.push({
+          range: [0,duration],
+          fnType: 'points',
+          graphType: 'scatter',
+          points: []
+        })
+      }
+
+      for (var i = 0; i < ws.length; i++ ){
+        var output = ws[i]
+        for (var j = 0; j < output.length; j++) {
+          outputs[j+1].points[i] = [data[i][0],output[j]]
+        }
+      }
 
       plotInstance = functionPlot({
         target: '#plot',
@@ -72,18 +95,7 @@
         xDomain: [0,duration],
         yDomain: [-2,2],
         disableZoom: true,
-        data: [{
-          range: [0,duration],
-          fnType: 'points',
-          graphType: 'polyline',
-          points: data
-        },
-        {
-          range: [0,duration],
-          fnType: 'points',
-          graphType: 'scatter',
-          points: ws
-        }]
+        data: outputs
       });
 
       var signal = new Float32Array(num_samples);
